@@ -1,3 +1,4 @@
+#This code requires a text file named savefile to work.
 from tkinter import *
 import random
 from tkinter import Button
