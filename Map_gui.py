@@ -1,9 +1,9 @@
-#This code requires a text file named savefile to work.
 from tkinter import *
 import random
 from tkinter import Button
 
 savefile = "savefile.txt"
+
 #-----------------------------------logic----------------------------------------------------------------
 def seperate(word):  # function that takes a word and makes it a list of all the characters inside the word
     result = []
@@ -20,14 +20,14 @@ def init():  # initial setup function
 
 def makemap(x, y):
     map = []  # declare empty array/ will be big list
-    #print("\n")  # new line for cleaner GUI
+   # print("\n")  # new line for cleaner GUI
     # the array becomes a 2D array aka small lists inside a big list
     for z in range(0, y):  # y decides how many lists will go inside the big list, will be the vertical value of grid
         map.append(["O"] * x)  # x decides how long one small list will be, will be horizontal value for grid
-    #for row in map:  # map is the big list, with lists inside it. row will iterate as each small list inside big list
-        #print("".join(row))  # prints out the row all connected.
+   # for row in map:  # map is the big list, with lists inside it. row will iterate as each small list inside big list
+       # print("".join(row))  # prints out the row all connected.
         # for loop jumps to the nextline every iteration
-    #print("\n Map created of " + str(x) + " long, and " + str(y) + " wide\n")  # gui
+   # print("\n Map created of " + str(x) + " long, and " + str(y) + " wide\n")  # gui
     return map  # RETURNS ARRAY, not the map, but the array of it
 
 def save(map):  # function used to save the progress onto an external txt file
@@ -96,7 +96,7 @@ def mapfinder(x,y):
     return mappyboi
 
 def moveup(map,x,y,char):
-
+    dmg = False
 
     px, py = locate(y, x, char)
     map[py][px] = "O"  # map[y][x]
@@ -106,70 +106,77 @@ def moveup(map,x,y,char):
     if px >= x or py >= y or px < 0 or py < 0:
         return map
     if map[py][px] == "G":
-        return map
+        dmg = True
+        return map, dmg
     else:
         map[py][px] = char
 
         save(map)
 
-        return map
+        return map, dmg
 
 def movedown(map,x,y,char):
+    dmg = False
     px, py = locate(y, x, char)
     map[py][px] = "O"  # map[y][x]
 
     py = py + 1
 
     if px >= x or py >= y or px < 0 or py < 0:
-        return map
+        return map,dmg
 
     if map[py][px] == "G":
-        return map
+        dmg=True
+        return map,dmg
 
 
     map[py][px] = char
 
     save(map)
 
-    return map
+    return map,dmg
 
 def moveright(map,x,y,char):
+    dmg=False
     px, py = locate(y, x, char)
     map[py][px] = "O"  # map[y][x]
 
     px = px + 1
 
     if px >= x or py >= y or px < 0 or py < 0:
-        return map
+        return map,dmg
 
     if map[py][px] == "G":
-        return map
+        dmg=True
+        return map,dmg
 
 
     map[py][px] = char
 
     save(map)
 
-    return map
+    return map,dmg
 
 def moveleft(map,x,y,char):
+    dmg=False
     px, py = locate(y, x, char)
     map[py][px] = "O"  # map[y][x]
 
     px = px - 1
 
     if px >= x or py >= y or px < 0 or py < 0:
-        return map
+        return map,dmg
 
     if map[py][px] == "G":
-        return map
+        dmg=True
+        return map,dmg
 
 
     map[py][px] = char
 
     save(map)
 
-    return map
+    return map,dmg
 
 def restard(map, x, y, char):
     px, py = locate(y, x, char)
@@ -180,7 +187,6 @@ def restard(map, x, y, char):
     map[y-1][x-1] = char
 
     save(map)
-
     return map
 
 def terrain(map):
@@ -208,31 +214,61 @@ map[y-1][x-1] = char  # map[y][x]
 save(map)
 
 #------------------------------GUI--------------------------------------------------------------
+def chkdmg(dmg,hp):
+    if dmg is True:
+        #print("check")
+        hp -= 1
+
+    fhp = "♥"*hp
+    fhp = ''.join(fhp)
+
+    return fhp
 
 def button_handler(event):
     widg = event.widget
 
+    hp = len(healthpoints.get())
+
     if widg == restartbutton:
         text.delete("1.0", END)
-        text.insert(END, readnshow(x, len(restard(mapfinder(x,y), x, y, char))))
+        restard(mapfinder(x, y), x, y, char)
+        text.insert(END, readnshow(x, 7))
+        healthpoints.set("♥♥♥")
+
     elif widg == upbutton:
         text.delete("1.0",END)
-        text.insert(END,readnshow(x ,len(moveup(mapfinder(x,y), x, y, char))))
+        map, dmg = moveup(mapfinder(x, y), x, y, char)
+        text.insert(END,readnshow(x ,7))
+        #global healthpoints
+        healthpoints.set(str(chkdmg(dmg,hp)))
+
     elif widg == downbutton:
         text.delete("1.0",END)
-        text.insert(END,readnshow(x ,len(movedown(mapfinder(x,y), x, y, char))))
+        map, dmg = movedown(mapfinder(x, y), x, y, char)
+        text.insert(END,readnshow(x ,7))
+        healthpoints.set(str(chkdmg(dmg, hp)))
     elif widg == rightbutton:
         text.delete("1.0",END)
-        text.insert(END,readnshow(x ,len(moveright(mapfinder(x,y), x, y, char))))
+        map, dmg =moveright(mapfinder(x, y), x, y, char)
+        text.insert(END,readnshow(x ,7))
+        healthpoints.set(str(chkdmg(dmg, hp)))
     elif widg == leftbutton:
         text.delete("1.0", END)
-        text.insert(END, readnshow(x, len(moveleft(mapfinder(x,y), x, y, char))))
+        map, dmg = moveleft(mapfinder(x, y), x, y, char)
+        text.insert(END, readnshow(x, 7))
+        healthpoints.set(str(chkdmg(dmg, hp)))
     if victory(x, y, char) == "gg":
         text.delete("1.0", END)
         text.insert(END, "YOU WIN")
-        #print("CHECk")
+    if hp == 0:
+        text.delete("1.0", END)
+        text.insert(END, "YOU LOSE")
+       # print("CHECk")
 
 win = Tk()
+healthpoints = StringVar()
+healthpoints.set("♥♥♥")
+
 win.resizable(0,0)
 win.title("Map")
 
@@ -257,6 +293,8 @@ leftbutton.grid(row=2,column=1)
 restartbutton=Button(win,text="RESET")
 restartbutton.grid(column=0,row=1)
 
-win.bind('<Button-1>',button_handler)
+healthbar = Label(win, textvariable=healthpoints, anchor=W, justify=LEFT, fg="red",bg="black", font=16, width= 4)
+healthbar.grid(row=1,column=4)
 
+win.bind('<Button-1>',button_handler)
 win.mainloop()
