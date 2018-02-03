@@ -1,31 +1,23 @@
-# This is a script which creates a map of variable dimensions
+# This is a script which creates a map of variable sizes
 # and allows the user to move a character around that map.
-savefile = "mapsave.txt"  # savefile
-
-
+savefile = "savefile.txt"  # savefile
 def menu():
-    x, y = input("\nEnter size of map(x,y): e.g 10 10 \n").split()  # takes dimensions of map
-    char = input("What is your favourite letter? ")  # takes character to use as main object
+    x, y = input("\nEnter size of map: 16(x) 16(y)\n>> ").split()  # takes dimensions of map
+    char = input("What is your favourite letter?\n>> ")  # takes character to use as main object
     char = char.upper()  # capitalises it
-
-    return x, y, char  # returns all of it
-
-
+    world = int(input("1 to turn on world boundaries, 2 to turn off\n>> "))
+    return x, y, char, world  # returns all of it
 def seperate(word):  # function that takes a word and makes it a list of all the characters inside the word
     result = []
     for l in word:
         result.append(l)
     return result
-
-
 def init():  # initial setup function
-    x, y, char = menu()  # gets values
+    x, y, char, world = menu()  # gets values
     x = int(x)
     y = int(y)  # str -> int type
     map = makemap(x, y)  #
-    return map, x, y, char  #
-
-
+    return map, x, y, char, world  #
 def makemap(x, y):
     map = []  # declare empty array/ will be big list
     print("\n")  # new line for cleaner GUI
@@ -37,33 +29,24 @@ def makemap(x, y):
         # for loop jumps to the nextline every iteration
     print("\n Map created of " + str(x) + " long, and " + str(y) + " wide\n")  # gui
     return map  # RETURNS ARRAY, not the map, but the array of it
-
-
 def save(map):  # function used to save the progress onto an external txt file
     mapp = []  # declare empty array
     for row in range(len(map)):  # row iterates as each row of the grid // or each small list inside big list
         mapp.append(''.join(str(v) for v in map[row]))  # composite shortcut: it has a second loop
         # it joins all the little lists inside the big list, so the 2d array becomes a normal list
         mapp.append('\n')  # add a newline at each row orelse everything becomes one big line
-
     savemap = ''.join(str(a) for a in mapp)  # joins the remaining list
-
     fo = open(savefile, "w")  # open savefile and nuke it
     fo.write(savemap)  # save it
     fo.close()  # close it
-
-
 def findxchar(row, char):  # func to locate character and returns its x coordinate position
     row = seperate(row)  # turns the row into a list of all its characters
     for xc in range(len(row)):  # checks every element in row // linear search
         if row[xc] == char:  # check
             return xc  # x coordinate of char
-
-
 def locate(y, x, char):  # finds both coordinates of character from save file
     x = int(x)  # int type
     fo = open(savefile, "r+")  # open save file
-
     ctr = 0
     while ctr <= int(y):
         row = fo.read((x + 1)).strip()  # takes a line out of the save file
@@ -74,21 +57,16 @@ def locate(y, x, char):  # finds both coordinates of character from save file
         ctr += 1
     fo.close()
     return xc, yc
-
-
 def readnshow(x,y):
     x = int(x)  # int type
     fo = open(savefile, "r+")  # open save file
-
     ctr = 0
     while ctr <= int(y):
         row = fo.read((x + 1)).strip() # read a line from the save file
         print(row)     # print that
         ctr += 1   # each iteration goes to the next line
     fo.close()
-
-
-def move(map, x, y, char):
+def move(map, x, y, char, world):
     direction = (input("w to move up, s to move down, d to move right, a to move left.\n\n>>>\t"))
     px, py = locate(y, x, char)
     map[py][px] = "O"  # map[y][x]
@@ -100,21 +78,29 @@ def move(map, x, y, char):
         py = py + 1
     elif direction == "w":
         py = py - 1
-
+    else:
+        print("Remember it's WASD controls\n")
+        return ("Remember it's WASD controls")
+    if world == 2:
+        if px >= x:
+            px = px - x
+        elif py >= y:
+            py = py - y
+    elif world == 1:
+        if px >= x or py >= y or px < 0 or py < 0:
+            print("\nError! Turn off world bondaries for that!\n")
+            return ("\nError! Turn off world bondaries for that!")
+    if map[py][px] == "X":                                      #detects collision
+        print(("\nSorry, you cannot go that way!\n"))
+        return ("Try something else")
     map[py][px] = char
     save(map)
-
-
 def main():
-    map, x, y, char = init()
+    map, x, y, char, world = init()
     map[0][0] = char  # map[y][x]
     save(map)
     readnshow(x,y)
-
     while True:
-        move(map, x, y, char)
+        move(map, x, y, char, world)
         readnshow(x,y)
-
-
 main()
-#not final one
