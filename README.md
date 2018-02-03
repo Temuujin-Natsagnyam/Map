@@ -1,2 +1,2 @@
 # Map
-A project to make a playable map using a 2D grid
+An extension project to a text based adventure game done in class. I learned many valuable skills in this project like file handling, double nested loops, and concepts of scope and index are much stronger now. 
