@@ -1,33 +1,33 @@
-# This is a script which creates a map of variable sizes
+# This is a script which creates a map of variable dimensions
 # and allows the user to move a character around that map.
+import random
 savefile = "savefile.txt"  # savefile
-def menu():
-    x, y = input("\nEnter size of map: 16(x) 16(y)\n>> ").split()  # takes dimensions of map
-    char = input("What is your favourite letter?\n>> ")  # takes character to use as main object
-    char = char.upper()  # capitalises it
-    world = int(input("1 to turn on world boundaries, 2 to turn off\n>> "))
-    return x, y, char, world  # returns all of it
+
+def terrain_static(map):
+    map[2][2]="X"
+    map[0][0]="O"
+    map[3][3]= "G"
+    return map
+def terrain_random(map):
+    for xc in range(4):
+        for yc in range(4):
+            chance = random.randint(1,10)
+            if chance == 6 or chance == 3:
+                map[xc][yc] = "X"
+    map[3][3]= "G"
+    return map
 def seperate(word):  # function that takes a word and makes it a list of all the characters inside the word
     result = []
     for l in word:
         result.append(l)
     return result
-def init():  # initial setup function
-    x, y, char, world = menu()  # gets values
-    x = int(x)
-    y = int(y)  # str -> int type
-    map = makemap(x, y)  #
-    return map, x, y, char, world  #
 def makemap(x, y):
     map = []  # declare empty array/ will be big list
     print("\n")  # new line for cleaner GUI
     # the array becomes a 2D array aka small lists inside a big list
     for z in range(0, y):  # y decides how many lists will go inside the big list, will be the vertical value of grid
         map.append(["O"] * x)  # x decides how long one small list will be, will be horizontal value for grid
-    for row in map:  # map is the big list, with lists inside it. row will iterate as each small list inside big list
-        print("".join(row))  # prints out the row all connected.
-        # for loop jumps to the nextline every iteration
-    print("\n Map created of " + str(x) + " long, and " + str(y) + " wide\n")  # gui
+    map = terrain_random(map)
     return map  # RETURNS ARRAY, not the map, but the array of it
 def save(map):  # function used to save the progress onto an external txt file
     mapp = []  # declare empty array
@@ -67,7 +67,8 @@ def readnshow(x,y):
         ctr += 1   # each iteration goes to the next line
     fo.close()
 def move(map, x, y, char, world):
-    direction = (input("w to move up, s to move down, d to move right, a to move left.\n\n>>>\t"))
+    direction = (input("WASD : your next move?\n\n>>>\t"))
+    print("\n")
     px, py = locate(y, x, char)
     map[py][px] = "O"  # map[y][x]
     if direction == "d":
@@ -80,7 +81,7 @@ def move(map, x, y, char, world):
         py = py - 1
     else:
         print("Remember it's WASD controls\n")
-        return ("Remember it's WASD controls")
+        #return ("Remember it's WASD controls")
     if world == 2:
         if px >= x:
             px = px - x
@@ -92,15 +93,25 @@ def move(map, x, y, char, world):
             return ("\nError! Turn off world bondaries for that!")
     if map[py][px] == "X":                                      #detects collision
         print(("\nSorry, you cannot go that way!\n"))
-        return ("Try something else")
+    if map[py][px] == "G":                                      #detects collision
+        print(("You've reached the goal"))
+        return (1)
     map[py][px] = char
     save(map)
+    return 0
 def main():
-    map, x, y, char, world = init()
+    x=int(4)
+    y=int(4)
+    char = ("P")
+    world = int(1)
+    map = makemap(x, y)
     map[0][0] = char  # map[y][x]
     save(map)
     readnshow(x,y)
     while True:
-        move(map, x, y, char, world)
+        win = move(map, x, y, char, world)
+        if win == 1:
+            break
         readnshow(x,y)
 main()
+brek = input() # this is just to stop the window from closing
