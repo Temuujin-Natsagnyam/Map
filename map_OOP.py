@@ -1,119 +1,228 @@
-# This is a script which creates a map of variable dimensions
-# and allows the user to move a character around that map.
 import random
-savefile = "savefile.txt"  # savefile
+from tkinter import Button
+from tkinter import *
 
-class mapp():
-    def terrain_static(self,map):
-        map[2][2]="X"
-        map[0][0]="O"
-        map[3][3]= "G"
-        return map
-    def terrain_random(self,map):
-        for xc in range(4):
-            for yc in range(4):
-                chance = random.randint(1,10)
-                if chance == 6 or chance == 3:
-                    map[xc][yc] = "X"
-        map[3][3]= "G"
-        return map
-    def makemap(self, x, y):
-        map = []  # declare empty array/ will be big list
-        print("\n")  # new line for cleaner GUI
-        # the array becomes a 2D array aka small lists inside a big list
-        for z in range(0, y):  # y decides how many lists will go inside the big list, will be the vertical value of grid
-            map.append(["O"] * x)  # x decides how long one small list will be, will be horizontal value for grid
-        map = self.terrain_random(map)
-        return map  # RETURNS ARRAY, not the map, but the array of it
-    def save(self, map):  # function used to save the progress onto an external txt file
-        mapp = []  # declare empty array
-        for row in range(len(map)):  # row iterates as each row of the grid // or each small list inside big list
-            mapp.append(''.join(str(v) for v in map[row]))  # composite shortcut: it has a second loop
-            # it joins all the little lists inside the big list, so the 2d array becomes a normal list
-            mapp.append('\n')  # add a newline at each row orelse everything becomes one big line
-        savemap = ''.join(str(a) for a in mapp)  # joins the remaining list
-        fo = open(savefile, "w")  # open savefile and nuke it
-        fo.write(savemap)  # save it
-        fo.close()  # close it
-    def findxchar(self, row, char):  # func to locate character and returns its x coordinate position
-        row = seperate(row)  # turns the row into a list of all its characters
-        for xc in range(len(row)):  # checks every element in row // linear search
-            if row[xc] == char:  # check
-                return xc  # x coordinate of char
-    def locate(self, y, x, char):  # finds both coordinates of character from save file
-        x = int(x)  # int type
-        fo = open(savefile, "r+")  # open save file
-        ctr = 0
-        while ctr <= int(y):
-            row = fo.read((x + 1)).strip()  # takes a line out of the save file
-            tempx = self.findxchar(row, char)    # checks if that row contains character
-            if tempx is not None:      # if it does have character that means it does not return None
-                xc = tempx # in which case tempx is the x coordinate or xc
-                yc = ctr# the ctr is also used to keep track of what line we are on, so the moment we find char we can say ctr is the vertical value
-            ctr += 1
-        fo.close()
-        return xc, yc
-    def readnshow(self, x,y):
-        x = int(x)  # int type
-        fo = open(savefile, "r+")  # open save file
-        ctr = 0
-        while ctr <= int(y):
-            row = fo.read((x + 1)).strip() # read a line from the save file
-            print(row)     # print that
-            ctr += 1   # each iteration goes to the next line
-        fo.close()
-    def move(self, map, x, y, char, world):
-        direction = (input("WASD : your next move?\n\n>>>\t"))
-        print("\n")
-        px, py = self.locate(y, x, char)
-        map[py][px] = "O"  # map[y][x]
-        if direction == "d":
-            px = px + 1
-        elif direction == "a":
-            px = px - 1
-        elif direction == "s":
-            py = py + 1
-        elif direction == "w":
-            py = py - 1
+def linear_search(field, target):
+    for location in range(len(field)):
+        if field[location] == target:
+            return location
+class map:
+    savefile = "savefile.txt"
+    damage = 0
+    def __init__(self, length, width, character):
+        self.length = length
+        self.width = width
+        self.character = character
+
+        map = self.SetTerrain()
+        map[width - 1][length - 1] = character  # map[y][x]
+        self.SaveMap(map)
+
+    def MakeMapArray(self):                                # Create 2d array
+        map = []
+        for z in range(0, self.width):
+            map.append(["O"] * self.length)
+        self.SaveMap(map)
+    def SaveMap(self, map):
+        savemap = []
+        for row in map:
+            savemap.append(''.join(tile for tile in row))  # Converting 2d array to 1d
+            savemap.append('\n')                           # Joined all the tiles in the rows
+        savemap = ''.join(row for row in savemap)          # Joined all the rows in the map
+
+        savefile = open(self.savefile, 'w')                # Open save file and clesr previous save
+        savefile.write(savemap)
+        savefile.close()
+    def LocateCharacter(self):
+        savefile = open(self.savefile, 'r')
+        for ctr in range(self.width):
+            row = savefile.read(self.length + 1)
+            x_found = linear_search(row, self.character)
+            if x_found is not None:
+                x = x_found
+                y = ctr
+        savefile.close()
+        return x, y
+    def DisplayMap(self):                                 #
+        savefile = open(self.savefile, 'r')
+        MapArray = []
+        for t in range(self.width):
+            row = savefile.read(self.length + 1).strip()
+            MapArray.append(row)
+        savefile.close()
+        return ('\n'.join(MapArray))
+    def LoadMap(self):                                     # 1d array to 2d
+        savefile = open(self.savefile, 'r')
+        MapArray = []
+        for t in range(self.width):
+            row = savefile.read(self.length + 1).strip()
+            row = list(row)
+            MapArray.append(row)
+        savefile.close()
+        return MapArray
+    def moveup(self):
+        maparray = self.LoadMap()
+        self.damage = False
+        x,y = self.LocateCharacter()
+        maparray[y][x] = 'O'                               # Clear it's old position
+        y -= 1
+
+        if y >= self.width or y < 0:                       # Border Detection
+            return maparray
+        if maparray[y][x] == "G":                          # Collision detection
+            self.damage = True
+            return maparray
         else:
-            print("Remember it's WASD controls\n")
-            #return ("Remember it's WASD controls")
-        if world == 2:
-            if px >= x:
-                px = px - x
-            elif py >= y:
-                py = py - y
-        elif world == 1:
-            if px >= x or py >= y or px < 0 or py < 0:
-                print("\nError! Turn off world bondaries for that!\n")
-                return ("\nError! Turn off world bondaries for that!")
-        if map[py][px] == "X":                                      #detects collision
-            print(("\nSorry, you cannot go that way!\n"))
-        if map[py][px] == "G":                                      #detects collision
-            print(("You've reached the goal"))
-            return (1)
-        map[py][px] = char
-        self.save(map)
-        return 0
-def seperate(word):  # function that takes a word and makes it a list of all the characters inside the word
-    result = []
-    for l in word:
-        result.append(l)
-    return result
-def main():
-    mapclass = mapp()
-    x=int(4)
-    y=int(4)
-    char = ("P")
-    world = int(1)
-    map = mapclass.makemap(x, y)
-    map[0][0] = char  # map[y][x]
-    mapclass.save(map)
-    mapclass.readnshow(x,y)
-    while True:
-        win = mapclass.move(map, x, y, char, world)
-        if win == 1:
-            break
-        mapclass.readnshow(x,y)
-main()
-brek = input()
+            maparray[y][x] = self.character
+            self.SaveMap(maparray)
+
+            return maparray
+    def movedown(self):
+        maparray = self.LoadMap()
+        self.damage = False
+        x,y = self.LocateCharacter()
+        maparray[y][x] = 'O'                               # Clear it's old position
+        y += 1
+
+        if y >= self.width or y < 0:                       # Border Detection
+            return maparray
+        if maparray[y][x] == "G":                          # Collision detection
+            self.damage = True
+            return maparray
+        else:
+            maparray[y][x] = self.character
+            self.SaveMap(maparray)
+
+            return maparray
+    def moveright(self):
+        maparray = self.LoadMap()
+        self.damage = False
+        x,y = self.LocateCharacter()
+        maparray[y][x] = 'O'                               # Clear it's old position
+        x += 1
+
+        if x >= self.length or x < 0:                       # Border Detection
+            return maparray
+        if maparray[y][x] == "G":                          # Collision detection
+            self.damage = True
+            return maparray
+        else:
+            maparray[y][x] = self.character
+            self.SaveMap(maparray)
+
+            return maparray
+    def moveleft(self):
+        maparray = self.LoadMap()
+        self.damage = False
+        x,y = self.LocateCharacter()
+        maparray[y][x] = 'O'                               # Clear it's old position
+        x -= 1
+
+        if x >= self.length or x < 0:                       # Border Detection
+            return maparray
+        if maparray[y][x] == "G":                          # Collision detection
+            self.damage = True
+            return maparray
+        else:
+            maparray[y][x] = self.character
+            self.SaveMap(maparray)
+
+            return maparray
+    def refresh(self):
+        map = self.SetTerrain()
+        map[self.width - 1][self.length - 1] = self.character
+        self.SaveMap(map)
+    def SetTerrain(self):
+        self.MakeMapArray()
+        maparray = self.LoadMap()
+        terrainodds = [2,5,8]                      #30%
+        for y in range(self.width):
+            for x in range(self.length):
+                chance = random.randint(1,10)
+                if chance in terrainodds:
+                    maparray[y][x] = 'G'
+        maparray[0][0] = 'O'
+        return maparray
+    def CheckVictory(self):
+        x,y = self.LocateCharacter()
+        if x == 0 and y == 0:
+            return 'gg'
+    def CheckDamage(self, health):
+        if self.damage is True:
+            health -= 1
+        healthpoints = "♥"*health
+        healthpoints = ''.join(healthpoints)
+        return healthpoints
+
+def button_handler(event):
+    widg = event.widget
+    health = len(healthpoints.get())
+    flag = 0
+    if widg == restartbutton:
+        text.delete("1.0", END)     #clear old text
+        mappy.refresh()
+        text.insert(END, mappy.DisplayMap())
+        healthpoints.set("♥♥♥")
+        flag = 1
+
+    elif widg == upbutton:
+        text.delete("1.0",END)
+        maparray = mappy.moveup()
+        text.insert(END, mappy.DisplayMap())
+        healthpoints.set(mappy.CheckDamage(health))
+    elif widg == downbutton:
+        text.delete("1.0",END)
+        maparray = mappy.movedown()
+        text.insert(END, mappy.DisplayMap())
+        healthpoints.set(mappy.CheckDamage(health))
+    elif widg == rightbutton:
+        text.delete("1.0",END)
+        maparray = mappy.moveright()
+        text.insert(END, mappy.DisplayMap())
+        healthpoints.set(mappy.CheckDamage(health))
+    elif widg == leftbutton:
+        text.delete("1.0",END)
+        maparray = mappy.moveleft()
+        text.insert(END, mappy.DisplayMap())
+        healthpoints.set(mappy.CheckDamage(health))
+
+    if mappy.CheckVictory() == 'gg' and flag == 0:
+        text.delete("1.0", END)
+        text.insert(END, "YOU WIN")
+    if health == 0 and flag == 0:
+        text.delete("1.0", END)
+        text.insert(END, "YOU DONT WIN")
+
+mappy = map(10, 6, 'X')
+app = Tk()
+healthpoints = StringVar()
+healthpoints.set("♥♥♥")
+app.resizable(0,0)
+app.title("Revision Speed Run")
+
+text= Text(app,width=14,heigh=6, font=("Helvetica", 32),bg="black",fg="White")
+text.grid(row=0,column=0,columnspan=5)
+
+nothing = Button(app,text="Nothing")
+nothing.grid(row=2,column=2)
+
+upbutton=Button(app,text='Move up')
+upbutton.grid(row=1,column=2)
+
+downbutton=Button(app,text='Move down')
+downbutton.grid(row=3,column=2)
+
+rightbutton=Button(app,text='Move right')
+rightbutton.grid(row=2,column=3)
+
+leftbutton=Button(app,text='Move left')
+leftbutton.grid(row=2,column=1)
+
+restartbutton=Button(app,text="RESET")
+restartbutton.grid(column=0,row=1)
+
+healthbar = Label(app, textvariable=healthpoints, anchor=W, justify=LEFT, fg="red",bg="black", font=16, width= 4)
+healthbar.grid(row=1,column=4)
+
+app.bind('<Button-1>',button_handler)
+app.mainloop()
